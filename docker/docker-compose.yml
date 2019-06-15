@@ -1,0 +1,83 @@
+version: '3'
+services:
+  cntnr_kmpmknlr_nginx:
+    image: 'nginx:latest'
+    container_name: kmpmknlr_nginx
+    hostname: kmpmknlr_nginx
+    restart: always
+    depends_on:
+      - cntnr_kmpmknlr_php
+    links:
+      - cntnr_kmpmknlr_php
+    ports:
+      - '8030:80'
+    volumes:
+      - '../htdocs:/var/www/html'
+      - './nginx/nginx.conf:/etc/nginx/nginx.conf'
+      - './nginx/default.conf:/etc/nginx/conf.d/default.conf'
+  cntnr_kmpmknlr_php:
+    build: php
+    container_name: kmpmknlr_php
+    hostname: kmpmknlr_php
+    restart: always
+    links:
+      - cntnr_kmpmknlr_mysql
+      - cntnr_kmpmknlr_phpmyadmin
+      - cntnr_kmpmknlr_redis
+      - cntnr_kmpmknlr_memcached
+    volumes:
+      - '../htdocs:/var/www/html'
+      - './php/php.ini:/usr/local/etc/php/php.ini'
+    ports:
+      - '8031:9000'
+  cntnr_kmpmknlr_mysql:
+    image: 'mysql:8.0'
+    container_name: kmpmknlr_mysql
+    hostname: kmpmknlr_mysql
+    restart: always
+    command: '--default-authentication-plugin=mysql_native_password'
+    volumes:
+      - './mysql/data:/var/lib/mysql'
+    ports:
+      - '8032:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: kmpmknlr_root
+      MYSQL_DATABASE: kmpmknlr_db
+      MYSQL_USER: kmpmknlr_user
+      MYSQL_PASSWORD: kmpmknlr_password
+  cntnr_kmpmknlr_phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: kmpmknlr_phpmyadmin
+    hostname: kmpmknlr_phpmyadmin
+    restart: always
+    depends_on:
+      - cntnr_kmpmknlr_mysql
+    links:
+      - cntnr_kmpmknlr_mysql
+    ports:
+      - '8033:80'
+    environment:
+      - PMA_HOST=kmpmknlr_mysql
+      - PMA_PORT=3306
+      - PMA_USER=root
+      - PMA_PASSWORD=kmpmknlr_root
+  cntnr_kmpmknlr_redis:
+    image: 'redis:latest'
+    container_name: kmpmknlr_redis
+    hostname: kmpmknlr_redis
+    restart: always
+    command:
+      - redis-server
+      - '--appendonly'
+      - 'yes'
+    ports:
+      - '8034:6379'
+    volumes:
+      - './redis/data:/data'
+  cntnr_kmpmknlr_memcached:
+    image: 'memcached:latest'
+    container_name: kmpmknlr_memcached
+    hostname: kmpmknlr_memcached
+    restart: always
+    ports:
+      - '8035:11211'
